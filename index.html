@@ -1,224 +1,903 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant AI Trainer – No Files</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Windows VM · x86 Emulator</title>
+
+    <!-- v86 Emulator Library -->
+    <script src="https://copy.sh/v86/v86.js">
+    </script>
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 700px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            background: #f9fafb;
-            color: #1e293b;
-        }
-        h1 { color: #0f172a; }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        textarea {
-            width: 100%;
-            padding: 0.8rem;
-            font-size: 1rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            resize: vertical;
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
-        .prompt-row {
+
+        body {
+            background: radial-gradient(ellipse at 30% 20%, #1a1e2c, #0b0d14);
+            min-height: 100vh;
             display: flex;
-            gap: 0.5rem;
+            justify-content: center;
             align-items: center;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* ── Main VM Container ── */
+        .vm-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 32px;
+            padding: 24px 24px 28px;
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+                0 0 40px rgba(0, 180, 255, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .vm-wrapper:hover {
+            box-shadow:
+                0 40px 100px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+                0 0 60px rgba(0, 180, 255, 0.06);
+        }
+
+        /* ── Header ── */
+        .vm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px 16px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             flex-wrap: wrap;
-            margin-top: 0.5rem;
+            gap: 12px;
         }
-        .prompt-row input {
-            flex: 1;
-            padding: 0.6rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.95rem;
+
+        .vm-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 0.7rem 1.8rem;
-            font-size: 1rem;
+
+        .vm-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vm-logo svg {
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 0 6px rgba(0, 160, 255, 0.3));
+        }
+
+        .vm-logo span {
             font-weight: 600;
-            border-radius: 8px;
+            font-size: 18px;
+            color: #f0f4ff;
+            letter-spacing: -0.3px;
+        }
+
+        .vm-logo small {
+            font-weight: 400;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+        }
+
+        .vm-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 14px 5px 12px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4a5568;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+            display: inline-block;
+        }
+
+        .status-dot.running {
+            background: #4ade80;
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+        }
+
+        .status-dot.paused {
+            background: #facc15;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+        }
+
+        .status-dot.stopped {
+            background: #f87171;
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
+        }
+
+        .vm-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Screen / Canvas ── */
+        .vm-screen-wrapper {
+            position: relative;
+            margin-top: 18px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #0a0c12;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 20px 60px rgba(0, 0, 0, 0.6);
+            aspect-ratio: 4 / 3;
+            width: 100%;
+        }
+
+        .vm-screen-wrapper canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            background: #0a0c12;
+        }
+
+        /* Overlay shown when VM is off / loading */
+        .vm-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 12, 18, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            gap: 18px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+        }
+
+        .vm-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .vm-overlay .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.06);
+            border-top: 3px solid rgba(100, 180, 255, 0.5);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .vm-overlay .overlay-text {
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .vm-overlay .overlay-text strong {
+            color: rgba(255, 255, 255, 0.55);
+            font-weight: 500;
+        }
+
+        /* ── Controls ── */
+        .vm-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 18px;
+            padding: 0 4px;
+        }
+
+        .vm-controls .btn-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .vm-controls button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
-        button:hover { background: #1d4ed8; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .output-box {
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 8px;
-            min-height: 4em;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-style: italic;
-            border: 1px dashed #cbd5e1;
+
+        .vm-controls button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
-        .stats { font-size: 0.9rem; color: #475569; margin-top: 0.25rem; }
+
+        .vm-controls button:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        .vm-controls button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .vm-controls button.primary {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.25);
+            color: rgba(147, 197, 253, 0.9);
+        }
+
+        .vm-controls button.primary:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #fff;
+        }
+
+        .vm-controls button.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: rgba(252, 165, 165, 0.8);
+        }
+
+        .vm-controls button.danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: #fff;
+        }
+
+        .vm-controls button.success {
+            background: rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.18);
+            color: rgba(134, 239, 172, 0.8);
+        }
+
+        .vm-controls button.success:hover:not(:disabled) {
+            background: rgba(74, 222, 128, 0.22);
+            border-color: rgba(74, 222, 128, 0.3);
+            color: #fff;
+        }
+
+        .vm-controls .spacer {
+            flex: 1;
+            min-width: 12px;
+        }
+
+        .vm-controls .file-input-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .vm-controls .file-input-wrap input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .vm-controls .file-input-wrap button {
+            pointer-events: none;
+        }
+
+        /* ── Status Bar ── */
+        .vm-statusbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding: 8px 12px 0 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.25);
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .vm-statusbar .left,
+        .vm-statusbar .right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .vm-statusbar .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .vm-statusbar .stat-item .label {
+            opacity: 0.4;
+        }
+
+        .vm-statusbar .stat-item .value {
+            color: rgba(255, 255, 255, 0.55);
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .vm-wrapper {
+                padding: 16px;
+                border-radius: 24px;
+            }
+
+            .vm-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .vm-header-left {
+                flex-wrap: wrap;
+            }
+
+            .vm-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .vm-controls .btn-group {
+                justify-content: center;
+            }
+
+            .vm-controls .spacer {
+                display: none;
+            }
+
+            .vm-statusbar {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                gap: 4px;
+            }
+
+            .vm-statusbar .left,
+            .vm-statusbar .right {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .vm-wrapper {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .vm-controls button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .vm-logo span {
+                font-size: 15px;
+            }
+
+            .vm-logo small {
+                font-size: 11px;
+            }
+        }
+
+        /* ── Scrollbar (invisible but functional) ── */
+        ::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
-    <h1>⚡ Tiny AI – Trains Instantly on Your Text</h1>
-    <p>Just type anything (even 5 words), click <strong>Train & Generate</strong>, and the AI learns your style and generates new sentences. No files, no uploads, all in your browser.</p>
 
-    <div class="card">
-        <label for="trainingText"><strong>1. Your training text (Markdown or plain English)</strong></label><br>
-        <textarea id="trainingText" rows="6" placeholder="e.g., The curious clockmaker lived in a small village. He fixed every clock with care. One day a stranger arrived."></textarea>
-        
-        <div class="prompt-row">
-            <label for="seedPrompt" style="white-space: nowrap;"><strong>2. Start with (optional):</strong></label>
-            <input type="text" id="seedPrompt" placeholder="e.g., The clockmaker">
-            <span style="white-space: nowrap;">Words to generate: <input type="number" id="wordCount" value="40" min="5" max="200" style="width:70px;"></span>
+    <div class="vm-wrapper" id="app">
+        <!-- ─── HEADER ─── -->
+        <header class="vm-header">
+            <div class="vm-header-left">
+                <div class="vm-logo">
+                    <!-- Windows-style logo (simplified) -->
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="9" height="9" rx="1" fill="#4ade80" opacity="0.7" />
+                        <rect x="13" y="2" width="9" height="9" rx="1" fill="#60a5fa" opacity="0.7" />
+                        <rect x="2" y="13" width="9" height="9" rx="1" fill="#fbbf24" opacity="0.7" />
+                        <rect x="13" y="13" width="9" height="9" rx="1" fill="#f87171" opacity="0.7" />
+                    </svg>
+                    <span>Virtual PC <small>· x86</small></span>
+                </div>
+                <div class="vm-status-badge">
+                    <span class="status-dot stopped" id="statusDot"></span>
+                    <span id="statusLabel">Stopped</span>
+                </div>
+            </div>
+            <div class="vm-header-right">
+                <!-- optional extra actions -->
+            </div>
+        </header>
+
+        <!-- ─── SCREEN ─── -->
+        <div class="vm-screen-wrapper" id="screenWrapper">
+            <canvas id="v86Canvas" width="800" height="600"></canvas>
+            <div class="vm-overlay visible" id="overlay">
+                <div class="spinner" id="spinner"></div>
+                <div class="overlay-text" id="overlayText">
+                    <strong>Windows VM</strong> · ready
+                </div>
+            </div>
         </div>
-        <button id="trainBtn">✨ Train & Generate</button>
-        <div id="statusMsg" class="stats"></div>
-    </div>
 
-    <div class="card">
-        <h3>🤖 AI‑Generated Text</h3>
-        <div class="output-box" id="output">Your text will appear here...</div>
+        <!-- ─── CONTROLS ─── -->
+        <div class="vm-controls">
+            <div class="btn-group">
+                <button class="success" id="btnStart" title="Start the virtual machine">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <polygon points="4,2 14,8 4,14" />
+                    </svg>
+                    Start
+                </button>
+                <button id="btnPause" disabled title="Pause / resume the VM">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="4" y="2" width="3" height="12" rx="0.5" />
+                        <rect x="9" y="2" width="3" height="12" rx="0.5" />
+                    </svg>
+                    Pause
+                </button>
+                <button class="danger" id="btnReset" disabled title="Reset the VM">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 8a6 6 0 1 1 1.5 4.2" />
+                        <path d="M2 2v4h4" />
+                    </svg>
+                    Reset
+                </button>
+            </div>
+
+            <div class="spacer"></div>
+
+            <div class="btn-group">
+                <div class="file-input-wrap">
+                    <button id="btnLoadImage">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                            <path d="M2 10v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" />
+                            <path d="M8 2v8" />
+                            <path d="M5 7l3 3 3-3" />
+                        </svg>
+                        Load Image
+                    </button>
+                    <input type="file" id="fileInput" accept=".img,.iso,.bin,.raw" />
+                </div>
+                <button id="btnFullscreen">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                        <path d="M2 5V3a1 1 0 0 1 1-1h2" />
+                        <path d="M11 2h2a1 1 0 0 1 1 1v2" />
+                        <path d="M14 11v2a1 1 0 0 1-1 1h-2" />
+                        <path d="M5 14H3a1 1 0 0 1-1-1v-2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── STATUS BAR ─── -->
+        <div class="vm-statusbar">
+            <div class="left">
+                <span class="stat-item">
+                    <span class="label">OS</span>
+                    <span class="value" id="osLabel">Windows 98</span>
+                </span>
+                <span class="stat-item">
+                    <span class="label">Memory</span>
+                    <span class="value" id="memLabel">128 MB</span>
+                </span>
+                <span class="stat-item">
+                    <span class="label">State</span>
+                    <span class="value" id="stateLabel">—</span>
+                </span>
+            </div>
+            <div class="right">
+                <span class="stat-item">
+                    <span class="label">v86</span>
+                    <span class="value">✓</span>
+                </span>
+            </div>
+        </div>
     </div>
 
     <script>
         (function() {
-            // ----- Simple Bigram Markov Chain (word pairs) -----
-            let bigramModel = null;   // { "word1|||word2": ["nextWord1", ...] }
-            let allWords = [];        // original text words in order
+            'use strict';
 
-            // Clean Markdown (strip syntax) to plain text
-            function stripMarkdown(md) {
-                let text = md;
-                // Remove code blocks
-                text = text.replace(/```[\s\S]*?```/g, ' ');
-                text = text.replace(/`[^`]+`/g, ' ');
-                // Remove images, keep alt text
-                text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, '$1');
-                // Remove links, keep text
-                text = text.replace(/\[([^\]]*)\]\([^\)]+\)/g, '$1');
-                // Remove headers
-                text = text.replace(/^#{1,6}\s+/gm, '');
-                // Bold/italic
-                text = text.replace(/\*{1,3}([^\*]+)\*{1,3}/g, '$1');
-                text = text.replace(/_{1,3}([^_]+)_{1,3}/g, '$1');
-                // List markers, blockquotes, horizontal rules
-                text = text.replace(/^[\-\*\+]\s+/gm, '');
-                text = text.replace(/^>\s+/gm, '');
-                text = text.replace(/^[\-\*\_]{3,}\s*$/gm, '');
-                // Collapse whitespace
-                text = text.replace(/\s+/g, ' ').trim();
-                return text;
+            // ─── DOM refs ───
+            const canvas = document.getElementById('v86Canvas');
+            const overlay = document.getElementById('overlay');
+            const overlayText = document.getElementById('overlayText');
+            const spinner = document.getElementById('spinner');
+
+            const statusDot = document.getElementById('statusDot');
+            const statusLabel = document.getElementById('statusLabel');
+            const stateLabel = document.getElementById('stateLabel');
+
+            const btnStart = document.getElementById('btnStart');
+            const btnPause = document.getElementById('btnPause');
+            const btnReset = document.getElementById('btnReset');
+            const btnLoadImage = document.getElementById('btnLoadImage');
+            const btnFullscreen = document.getElementById('btnFullscreen');
+            const fileInput = document.getElementById('fileInput');
+
+            // ─── Constants ───
+            const CDN_BASE = 'https://copy.sh/v86/';
+            const BIOS_URL = CDN_BASE + 'bios/seabios.bin';
+            const VGABIOS_URL = CDN_BASE + 'bios/vgabios.bin';
+            const DEFAULT_IMAGE_URL = CDN_BASE + 'images/windows98.img';
+
+            // ─── State ───
+            let emulator = null;
+            let vmState = 'stopped'; // 'stopped' | 'running' | 'paused'
+            let imageUrl = DEFAULT_IMAGE_URL;
+            let imageFile = null;
+            let isStarting = false;
+
+            // ─── UI update helpers ───
+            function setStatus(state) {
+                vmState = state;
+                const dot = statusDot;
+                const label = statusLabel;
+                dot.className = 'status-dot';
+                if (state === 'running') {
+                    dot.classList.add('running');
+                    label.textContent = 'Running';
+                    stateLabel.textContent = 'Active';
+                } else if (state === 'paused') {
+                    dot.classList.add('paused');
+                    label.textContent = 'Paused';
+                    stateLabel.textContent = 'Paused';
+                } else {
+                    dot.classList.add('stopped');
+                    label.textContent = 'Stopped';
+                    stateLabel.textContent = '—';
+                }
+
+                // Buttons
+                btnStart.disabled = (state === 'running' || state === 'paused' || isStarting);
+                btnPause.disabled = (state === 'stopped' || isStarting);
+                btnReset.disabled = (state === 'stopped' || isStarting);
+                if (state === 'paused') {
+                    btnPause.textContent = 'Resume';
+                } else {
+                    btnPause.innerHTML =
+                        '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="2" width="3" height="12" rx="0.5"/><rect x="9" y="2" width="3" height="12" rx="0.5"/></svg> Pause';
+                }
+
+                // Overlay
+                if (state === 'stopped') {
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
+                } else if (state === 'running') {
+                    overlay.classList.remove('visible');
+                } else if (state === 'paused') {
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = '<strong>Paused</strong> · click <strong>Resume</strong> to continue';
+                }
             }
 
-            // Build bigram model from array of words
-            function buildBigramModel(words) {
-                if (words.length < 2) return null;
-                const model = new Map();
-                for (let i = 0; i < words.length - 1; i++) {
-                    const key = words[i];
-                    const nextWord = words[i + 1];
-                    if (!model.has(key)) model.set(key, []);
-                    model.get(key).push(nextWord);
-                }
-                // Also add last word with no followers? We'll just stop.
-                return model;
+            function showLoading(msg) {
+                overlay.classList.add('visible');
+                spinner.style.display = 'block';
+                overlayText.innerHTML = msg || 'Loading...';
             }
 
-            // Generate text using bigram model + optional seed prompt
-            function generate(model, allWordsArr, prompt, maxWords) {
-                // Prepare seed words from prompt
-                let seedWords = prompt.trim().split(/\s+/).filter(w => w.length > 0);
-                let generated = [...seedWords];
+            function hideOverlay() {
+                overlay.classList.remove('visible');
+                spinner.style.display = 'none';
+            }
 
-                // If prompt empty or only one word, pick a random starting word from text
-                if (generated.length === 0) {
-                    const randIdx = Math.floor(Math.random() * allWordsArr.length);
-                    generated.push(allWordsArr[randIdx]);
+            // ─── Emulator lifecycle ───
+            function createEmulator(imageSource) {
+                if (emulator) {
+                    try { emulator.destroy(); } catch (_) {}
+                    emulator = null;
                 }
-                
-                // If we have less than 2 words, we need a second word to start chain
-                if (generated.length === 1) {
-                    const lastWord = generated[0];
-                    const possibilities = model.get(lastWord);
-                    if (possibilities && possibilities.length > 0) {
-                        generated.push(possibilities[Math.floor(Math.random() * possibilities.length)]);
-                    } else {
-                        // Fallback: pick a random next word from all words
-                        const randIdx = Math.floor(Math.random() * allWordsArr.length);
-                        generated.push(allWordsArr[randIdx]);
+
+                const config = {
+                    screen_container: canvas,
+                    bios: { url: BIOS_URL },
+                    vga_bios: { url: VGABIOS_URL },
+                    autostart: false,
+                    memory_size: 128 * 1024 * 1024,
+                    vga_memory_size: 8 * 1024 * 1024,
+                    hda: null,
+                    fda: null,
+                    cdrom: null,
+                    network_relay_url: null,
+                };
+
+                if (imageFile instanceof File) {
+                    // User uploaded a file — read it as ArrayBuffer
+                    showLoading('Loading disk image…');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const buffer = e.target.result;
+                        config.hda = { buffer: buffer };
+                        initEmulator(config);
+                    };
+                    reader.onerror = function() {
+                        alert('Failed to read the image file.');
+                        setStatus('stopped');
+                        isStarting = false;
+                    };
+                    reader.readAsArrayBuffer(imageFile);
+                    return;
+                }
+
+                if (typeof imageSource === 'string' && imageSource.startsWith('http')) {
+                    // Load from URL
+                    config.hda = { url: imageSource };
+                    initEmulator(config);
+                    return;
+                }
+
+                // Fallback: try default image URL
+                config.hda = { url: DEFAULT_IMAGE_URL };
+                initEmulator(config);
+            }
+
+            function initEmulator(config) {
+                try {
+                    emulator = new V86(config);
+                    emulator.add_listener('emulator-loaded', function() {
+                        hideOverlay();
+                        setStatus('running');
+                        isStarting = false;
+                    });
+                    emulator.add_listener('emulator-started', function() {
+                        hideOverlay();
+                        setStatus('running');
+                        isStarting = false;
+                    });
+                    emulator.add_listener('emulator-paused', function() {
+                        setStatus('paused');
+                    });
+                    emulator.add_listener('emulator-resumed', function() {
+                        hideOverlay();
+                        setStatus('running');
+                    });
+                    emulator.add_listener('emulator-stopped', function() {
+                        setStatus('stopped');
+                        isStarting = false;
+                    });
+                    emulator.add_listener('error', function(err) {
+                        console.error('v86 error:', err);
+                        setStatus('stopped');
+                        isStarting = false;
+                        overlay.classList.add('visible');
+                        spinner.style.display = 'none';
+                        overlayText.innerHTML =
+                        '<strong>Error</strong> · ' + (err.message || 'Failed to boot.') +
+                        ' <br><span style="font-size:12px;opacity:0.5;">Try loading a different disk image.</span>';
+                    });
+
+                    // Show loading state
+                    showLoading('Booting Windows…');
+                    setStatus('stopped'); // will change once loaded
+
+                    // Start the VM
+                    emulator.run();
+                } catch (err) {
+                    console.error('Failed to initialize v86:', err);
+                    setStatus('stopped');
+                    isStarting = false;
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = '<strong>Init Error</strong> · ' + err.message;
+                }
+            }
+
+            // ─── Controls ───
+            function startVM() {
+                if (isStarting) return;
+                if (emulator) {
+                    // If already exists but stopped, try to run
+                    try {
+                        emulator.run();
+                        showLoading('Booting…');
+                        setStatus('stopped'); // will update on event
+                        return;
+                    } catch (_) { /* fall through to recreate */ }
+                }
+                isStarting = true;
+                setStatus('stopped');
+                createEmulator(imageUrl);
+            }
+
+            function togglePause() {
+                if (!emulator) return;
+                try {
+                    if (vmState === 'running') {
+                        emulator.pause();
+                        // status updated by event listener
+                    } else if (vmState === 'paused') {
+                        emulator.resume();
+                        // status updated by event listener
+                    }
+                } catch (err) {
+                    console.warn('Pause/resume error:', err);
+                }
+            }
+
+            function resetVM() {
+                if (!emulator) return;
+                try {
+                    emulator.stop();
+                    // Wait a beat then restart
+                    setTimeout(() => {
+                        try {
+                            emulator.run();
+                            showLoading('Resetting…');
+                            setStatus('stopped');
+                        } catch (_) {
+                            setStatus('stopped');
+                            isStarting = false;
+                        }
+                    }, 300);
+                } catch (err) {
+                    console.warn('Reset error:', err);
+                    setStatus('stopped');
+                    isStarting = false;
+                }
+            }
+
+            function loadImage(file) {
+                if (!file) return;
+                // Validate file type (basic)
+                const name = file.name.toLowerCase();
+                if (!name.endsWith('.img') && !name.endsWith('.iso') && !name.endsWith('.bin') && !name.endsWith('.raw')) {
+                    if (!confirm('The file "' + file.name + '" may not be a valid disk image. Load anyway?')) {
+                        return;
                     }
                 }
-
-                // Now generate up to maxWords additional words
-                for (let i = 0; i < maxWords; i++) {
-                    const lastWord = generated[generated.length - 1];
-                    const candidates = model.get(lastWord);
-                    if (!candidates || candidates.length === 0) break; // no known continuation
-                    const next = candidates[Math.floor(Math.random() * candidates.length)];
-                    generated.push(next);
+                // Stop current VM
+                if (emulator) {
+                    try { emulator.stop(); } catch (_) {}
+                    try { emulator.destroy(); } catch (_) {}
+                    emulator = null;
                 }
-                return generated.join(' ');
+                imageFile = file;
+                imageUrl = null;
+                setStatus('stopped');
+                overlay.classList.add('visible');
+                spinner.style.display = 'none';
+                overlayText.innerHTML = 'Image loaded: <strong>' + file.name + '</strong> · click <strong>Start</strong> to boot';
+                // Update OS label
+                document.getElementById('osLabel').textContent = file.name.replace(/\.[^.]+$/, '') || 'Custom Image';
             }
 
-            // UI elements
-            const trainBtn = document.getElementById('trainBtn');
-            const trainingTextArea = document.getElementById('trainingText');
-            const seedPromptInput = document.getElementById('seedPrompt');
-            const wordCountInput = document.getElementById('wordCount');
-            const outputDiv = document.getElementById('output');
-            const statusMsg = document.getElementById('statusMsg');
-
-            trainBtn.addEventListener('click', () => {
-                const rawText = trainingTextArea.value.trim();
-                if (rawText === '') {
-                    statusMsg.textContent = '❌ Please type some training text.';
-                    return;
+            function toggleFullscreen() {
+                const wrapper = document.querySelector('.vm-wrapper');
+                if (!document.fullscreenElement) {
+                    wrapper.requestFullscreen?.() || wrapper.webkitRequestFullscreen?.();
+                } else {
+                    document.exitFullscreen?.() || document.webkitExitFullscreen?.();
                 }
+            }
 
-                // Clean and tokenize
-                const plainText = stripMarkdown(rawText);
-                const words = plainText.split(/\s+/).filter(w => w.length > 0);
-                
-                if (words.length < 2) {
-                    // Too few words – just echo the text as output
-                    outputDiv.textContent = rawText;
-                    statusMsg.textContent = `⚠️ Need at least 2 words to train. Showing your input.`;
-                    return;
+            // ─── Event Listeners ───
+            btnStart.addEventListener('click', startVM);
+            btnPause.addEventListener('click', togglePause);
+            btnReset.addEventListener('click', resetVM);
+            btnFullscreen.addEventListener('click', toggleFullscreen);
+
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    loadImage(this.files[0]);
                 }
-
-                // Train bigram model
-                allWords = words;
-                bigramModel = buildBigramModel(words);
-                
-                // Generate
-                const prompt = seedPromptInput.value.trim();
-                const maxWords = parseInt(wordCountInput.value, 10) || 40;
-                const generated = generate(bigramModel, allWords, prompt, maxWords);
-                
-                outputDiv.textContent = generated;
-                statusMsg.textContent = `✅ Trained on ${words.length} words. Generated ${generated.split(/\s+/).length} words.`;
+                this.value = ''; // allow re-selecting same file
             });
 
-            // Optionally, generate on Enter in the training text (Ctrl+Enter)
-            trainingTextArea.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+Alt+S = start
+                if (e.ctrlKey && e.altKey && e.key === 's') {
                     e.preventDefault();
-                    trainBtn.click();
+                    startVM();
+                }
+                // Ctrl+Alt+P = pause/resume
+                if (e.ctrlKey && e.altKey && e.key === 'p') {
+                    e.preventDefault();
+                    togglePause();
+                }
+                // Ctrl+Alt+R = reset
+                if (e.ctrlKey && e.altKey && e.key === 'r') {
+                    e.preventDefault();
+                    resetVM();
+                }
+                // Ctrl+Alt+F = fullscreen
+                if (e.ctrlKey && e.altKey && e.key === 'f') {
+                    e.preventDefault();
+                    toggleFullscreen();
                 }
             });
+
+            // ─── Init ───
+            setStatus('stopped');
+            overlay.classList.add('visible');
+            spinner.style.display = 'none';
+            overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
+
+            // Click overlay to start (convenience)
+            overlay.addEventListener('click', function(e) {
+                if (vmState === 'stopped' && !isStarting) {
+                    startVM();
+                } else if (vmState === 'paused') {
+                    togglePause();
+                }
+            });
+
+            // Handle fullscreen change
+            document.addEventListener('fullscreenchange', function() {
+                // no-op, just visual
+            });
+
+            // ─── Expose for debugging ───
+            window.__vm = {
+                emulator: () => emulator,
+                state: () => vmState,
+                start: startVM,
+                pause: togglePause,
+                reset: resetVM,
+                loadImage: loadImage,
+            };
+
+            console.log('%c🖥️  Windows VM · v86 Emulator', 'font-size:18px;font-weight:600;color:#60a5fa;');
+            console.log('  Start:   Ctrl+Alt+S');
+            console.log('  Pause:   Ctrl+Alt+P');
+            console.log('  Reset:   Ctrl+Alt+R');
+            console.log('  Fullscreen: Ctrl+Alt+F');
+            console.log('  Load image: click "Load Image" button');
+
         })();
     </script>
+
 </body>
 </html>
