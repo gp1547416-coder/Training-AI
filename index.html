@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Windows VM · x86 Emulator</title>
 
-    <!-- v86 Emulator Library (reliable CDN) -->
-    <script src="https://unpkg.com/v86@1.2.1/build/v86.js">
-    </script>
-
     <style>
         /* ── Reset & Base ── */
         *,
@@ -30,7 +26,6 @@
             margin: 0;
         }
 
-        /* ── Main VM Container ── */
         .vm-wrapper {
             width: 100%;
             max-width: 1000px;
@@ -39,18 +34,12 @@
             -webkit-backdrop-filter: blur(18px);
             border-radius: 32px;
             padding: 24px 24px 28px;
-            box-shadow:
-                0 30px 80px rgba(0, 0, 0, 0.7),
-                0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-                0 0 40px rgba(0, 180, 255, 0.04);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 0 40px rgba(0, 180, 255, 0.04);
             transition: all 0.3s ease;
         }
 
         .vm-wrapper:hover {
-            box-shadow:
-                0 40px 100px rgba(0, 0, 0, 0.8),
-                0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-                0 0 60px rgba(0, 180, 255, 0.06);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 0 60px rgba(0, 180, 255, 0.06);
         }
 
         /* ── Header ── */
@@ -122,33 +111,23 @@
             background: #4ade80;
             box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
         }
-
         .status-dot.paused {
             background: #facc15;
             box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
         }
-
         .status-dot.stopped {
             background: #f87171;
             box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
         }
 
-        .vm-header-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* ── Screen / Canvas ── */
+        /* ── Screen ── */
         .vm-screen-wrapper {
             position: relative;
             margin-top: 18px;
             border-radius: 20px;
             overflow: hidden;
             background: #0a0c12;
-            box-shadow:
-                0 0 0 1px rgba(255, 255, 255, 0.05),
-                0 20px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 60px rgba(0, 0, 0, 0.6);
             aspect-ratio: 4 / 3;
             width: 100%;
         }
@@ -161,7 +140,6 @@
             background: #0a0c12;
         }
 
-        /* Overlay shown when VM is off / loading */
         .vm-overlay {
             position: absolute;
             inset: 0;
@@ -205,6 +183,8 @@
             font-weight: 400;
             letter-spacing: 0.5px;
             color: rgba(255, 255, 255, 0.35);
+            text-align: center;
+            max-width: 80%;
         }
 
         .vm-overlay .overlay-text strong {
@@ -264,15 +244,15 @@
             transform: none !important;
         }
 
-        .vm-controls button.primary {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.25);
-            color: rgba(147, 197, 253, 0.9);
+        .vm-controls button.success {
+            background: rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.18);
+            color: rgba(134, 239, 172, 0.8);
         }
 
-        .vm-controls button.primary:hover:not(:disabled) {
-            background: rgba(59, 130, 246, 0.3);
-            border-color: rgba(59, 130, 246, 0.4);
+        .vm-controls button.success:hover:not(:disabled) {
+            background: rgba(74, 222, 128, 0.22);
+            border-color: rgba(74, 222, 128, 0.3);
             color: #fff;
         }
 
@@ -285,18 +265,6 @@
         .vm-controls button.danger:hover:not(:disabled) {
             background: rgba(239, 68, 68, 0.25);
             border-color: rgba(239, 68, 68, 0.35);
-            color: #fff;
-        }
-
-        .vm-controls button.success {
-            background: rgba(74, 222, 128, 0.12);
-            border-color: rgba(74, 222, 128, 0.18);
-            color: rgba(134, 239, 172, 0.8);
-        }
-
-        .vm-controls button.success:hover:not(:disabled) {
-            background: rgba(74, 222, 128, 0.22);
-            border-color: rgba(74, 222, 128, 0.3);
             color: #fff;
         }
 
@@ -360,43 +328,35 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* ── Responsive ── */
         @media (max-width: 700px) {
             .vm-wrapper {
                 padding: 16px;
                 border-radius: 24px;
             }
-
             .vm-header {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 10px;
             }
-
             .vm-header-left {
                 flex-wrap: wrap;
             }
-
             .vm-controls {
                 flex-direction: column;
                 align-items: stretch;
             }
-
             .vm-controls .btn-group {
                 justify-content: center;
             }
-
             .vm-controls .spacer {
                 display: none;
             }
-
             .vm-statusbar {
                 flex-direction: column;
                 align-items: stretch;
                 text-align: center;
                 gap: 4px;
             }
-
             .vm-statusbar .left,
             .vm-statusbar .right {
                 justify-content: center;
@@ -409,22 +369,18 @@
                 padding: 12px;
                 border-radius: 18px;
             }
-
             .vm-controls button {
                 padding: 6px 12px;
                 font-size: 12px;
             }
-
             .vm-logo span {
                 font-size: 15px;
             }
-
             .vm-logo small {
                 font-size: 11px;
             }
         }
 
-        /* ── Scrollbar (invisible but functional) ── */
         ::-webkit-scrollbar {
             width: 0;
             background: transparent;
@@ -434,11 +390,10 @@
 <body>
 
     <div class="vm-wrapper" id="app">
-        <!-- ─── HEADER ─── -->
+        <!-- HEADER -->
         <header class="vm-header">
             <div class="vm-header-left">
                 <div class="vm-logo">
-                    <!-- Windows-style logo (simplified) -->
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="2" width="9" height="9" rx="1" fill="#4ade80" opacity="0.7" />
                         <rect x="13" y="2" width="9" height="9" rx="1" fill="#60a5fa" opacity="0.7" />
@@ -452,39 +407,36 @@
                     <span id="statusLabel">Stopped</span>
                 </div>
             </div>
-            <div class="vm-header-right">
-                <!-- optional extra actions -->
-            </div>
         </header>
 
-        <!-- ─── SCREEN ─── -->
+        <!-- SCREEN -->
         <div class="vm-screen-wrapper" id="screenWrapper">
             <canvas id="v86Canvas" width="800" height="600"></canvas>
             <div class="vm-overlay visible" id="overlay">
                 <div class="spinner" id="spinner"></div>
                 <div class="overlay-text" id="overlayText">
-                    <strong>Windows VM</strong> · ready
+                    <strong>Loading v86 library…</strong>
                 </div>
             </div>
         </div>
 
-        <!-- ─── CONTROLS ─── -->
+        <!-- CONTROLS -->
         <div class="vm-controls">
             <div class="btn-group">
-                <button class="success" id="btnStart" title="Start the virtual machine">
+                <button class="success" id="btnStart" disabled>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <polygon points="4,2 14,8 4,14" />
                     </svg>
                     Start
                 </button>
-                <button id="btnPause" disabled title="Pause / resume the VM">
+                <button id="btnPause" disabled>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <rect x="4" y="2" width="3" height="12" rx="0.5" />
                         <rect x="9" y="2" width="3" height="12" rx="0.5" />
                     </svg>
                     Pause
                 </button>
-                <button class="danger" id="btnReset" disabled title="Reset the VM">
+                <button class="danger" id="btnReset" disabled>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M2 8a6 6 0 1 1 1.5 4.2" />
                         <path d="M2 2v4h4" />
@@ -492,12 +444,10 @@
                     Reset
                 </button>
             </div>
-
             <div class="spacer"></div>
-
             <div class="btn-group">
                 <div class="file-input-wrap">
-                    <button id="btnLoadImage">
+                    <button id="btnLoadImage" disabled>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                             <path d="M2 10v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" />
                             <path d="M8 2v8" />
@@ -505,9 +455,9 @@
                         </svg>
                         Load Image
                     </button>
-                    <input type="file" id="fileInput" accept=".img,.iso,.bin,.raw" />
+                    <input type="file" id="fileInput" accept=".img,.iso,.bin,.raw" disabled />
                 </div>
-                <button id="btnFullscreen">
+                <button id="btnFullscreen" disabled>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                         <path d="M2 5V3a1 1 0 0 1 1-1h2" />
                         <path d="M11 2h2a1 1 0 0 1 1 1v2" />
@@ -518,7 +468,7 @@
             </div>
         </div>
 
-        <!-- ─── STATUS BAR ─── -->
+        <!-- STATUS BAR -->
         <div class="vm-statusbar">
             <div class="left">
                 <span class="stat-item">
@@ -537,7 +487,7 @@
             <div class="right">
                 <span class="stat-item">
                     <span class="label">v86</span>
-                    <span class="value">✓</span>
+                    <span class="value" id="v86Status">⏳ loading</span>
                 </span>
             </div>
         </div>
@@ -547,25 +497,15 @@
         (function() {
             'use strict';
 
-            // ─── Check if V86 library loaded ───
-            if (typeof V86 === 'undefined') {
-                document.getElementById('overlayText').innerHTML =
-                    '<strong>Library Error</strong> · v86 emulator failed to load. <br> Please check your internet connection and refresh.';
-                document.getElementById('overlay').classList.add('visible');
-                document.getElementById('spinner').style.display = 'none';
-                console.error('V86 library not loaded. Check CDN.');
-                return;
-            }
-
             // ─── DOM refs ───
             const canvas = document.getElementById('v86Canvas');
             const overlay = document.getElementById('overlay');
             const overlayText = document.getElementById('overlayText');
             const spinner = document.getElementById('spinner');
-
             const statusDot = document.getElementById('statusDot');
             const statusLabel = document.getElementById('statusLabel');
             const stateLabel = document.getElementById('stateLabel');
+            const v86Status = document.getElementById('v86Status');
 
             const btnStart = document.getElementById('btnStart');
             const btnPause = document.getElementById('btnPause');
@@ -580,37 +520,46 @@
             const VGABIOS_URL = CDN_BASE + 'bios/vgabios.bin';
             const DEFAULT_IMAGE_URL = CDN_BASE + 'images/windows98.img';
 
+            // List of CDN URLs to try (in order)
+            const CDN_URLS = [
+                'https://cdn.jsdelivr.net/npm/v86@1.2.1/build/v86.js',
+                'https://unpkg.com/v86@1.2.1/build/v86.js',
+                'https://copy.sh/v86/v86.js' // fallback to original
+            ];
+
             // ─── State ───
             let emulator = null;
-            let vmState = 'stopped'; // 'stopped' | 'running' | 'paused'
+            let vmState = 'stopped';
             let imageUrl = DEFAULT_IMAGE_URL;
             let imageFile = null;
             let isStarting = false;
+            let libraryLoaded = false;
 
-            // ─── UI update helpers ───
+            // ─── UI helpers ───
             function setStatus(state) {
                 vmState = state;
-                const dot = statusDot;
-                const label = statusLabel;
-                dot.className = 'status-dot';
+                statusDot.className = 'status-dot';
                 if (state === 'running') {
-                    dot.classList.add('running');
-                    label.textContent = 'Running';
+                    statusDot.classList.add('running');
+                    statusLabel.textContent = 'Running';
                     stateLabel.textContent = 'Active';
                 } else if (state === 'paused') {
-                    dot.classList.add('paused');
-                    label.textContent = 'Paused';
+                    statusDot.classList.add('paused');
+                    statusLabel.textContent = 'Paused';
                     stateLabel.textContent = 'Paused';
                 } else {
-                    dot.classList.add('stopped');
-                    label.textContent = 'Stopped';
+                    statusDot.classList.add('stopped');
+                    statusLabel.textContent = 'Stopped';
                     stateLabel.textContent = '—';
                 }
 
-                // Buttons
-                btnStart.disabled = (state === 'running' || state === 'paused' || isStarting);
-                btnPause.disabled = (state === 'stopped' || isStarting);
-                btnReset.disabled = (state === 'stopped' || isStarting);
+                btnStart.disabled = (state === 'running' || state === 'paused' || isStarting || !libraryLoaded);
+                btnPause.disabled = (state === 'stopped' || isStarting || !libraryLoaded);
+                btnReset.disabled = (state === 'stopped' || isStarting || !libraryLoaded);
+                btnLoadImage.disabled = !libraryLoaded;
+                fileInput.disabled = !libraryLoaded;
+                btnFullscreen.disabled = !libraryLoaded;
+
                 if (state === 'paused') {
                     btnPause.textContent = 'Resume';
                 } else {
@@ -618,7 +567,6 @@
                         '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="2" width="3" height="12" rx="0.5"/><rect x="9" y="2" width="3" height="12" rx="0.5"/></svg> Pause';
                 }
 
-                // Overlay
                 if (state === 'stopped') {
                     overlay.classList.add('visible');
                     spinner.style.display = 'none';
@@ -643,7 +591,46 @@
                 spinner.style.display = 'none';
             }
 
-            // ─── Emulator lifecycle ───
+            function setLibraryStatus(text, isError = false) {
+                v86Status.textContent = text;
+                v86Status.style.color = isError ? '#f87171' : 'rgba(255,255,255,0.55)';
+            }
+
+            // ─── Dynamic script loader ───
+            function loadScript(url) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = url;
+                    script.async = true;
+                    script.onload = () => resolve(url);
+                    script.onerror = () => reject(url);
+                    document.head.appendChild(script);
+                });
+            }
+
+            async function loadLibrary() {
+                let success = false;
+                for (const url of CDN_URLS) {
+                    try {
+                        setLibraryStatus(`Trying ${url.split('/')[2]}…`);
+                        await loadScript(url);
+                        // Check if V86 is defined
+                        if (typeof V86 !== 'undefined') {
+                            libraryLoaded = true;
+                            setLibraryStatus('✓ loaded');
+                            return true;
+                        } else {
+                            // script loaded but V86 not defined (unlikely)
+                            console.warn('Script loaded but V86 not defined from', url);
+                        }
+                    } catch (err) {
+                        console.warn('Failed to load from', url, err);
+                    }
+                }
+                return false;
+            }
+
+            // ─── Emulator ───
             function createEmulator(imageSource) {
                 if (emulator) {
                     try { emulator.destroy(); } catch (_) {}
@@ -664,16 +651,14 @@
                 };
 
                 if (imageFile instanceof File) {
-                    // User uploaded a file — read it as ArrayBuffer
                     showLoading('Loading disk image…');
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        const buffer = e.target.result;
-                        config.hda = { buffer: buffer };
+                        config.hda = { buffer: e.target.result };
                         initEmulator(config);
                     };
                     reader.onerror = function() {
-                        alert('Failed to read the image file.');
+                        alert('Failed to read image file.');
                         setStatus('stopped');
                         isStarting = false;
                     };
@@ -682,13 +667,11 @@
                 }
 
                 if (typeof imageSource === 'string' && imageSource.startsWith('http')) {
-                    // Load from URL
                     config.hda = { url: imageSource };
                     initEmulator(config);
                     return;
                 }
 
-                // Fallback: try default image URL
                 config.hda = { url: DEFAULT_IMAGE_URL };
                 initEmulator(config);
             }
@@ -728,14 +711,11 @@
                             ' <br><span style="font-size:12px;opacity:0.5;">Try loading a different disk image.</span>';
                     });
 
-                    // Show loading state
                     showLoading('Booting Windows…');
-                    setStatus('stopped'); // will change once loaded
-
-                    // Start the VM
+                    setStatus('stopped');
                     emulator.run();
                 } catch (err) {
-                    console.error('Failed to initialize v86:', err);
+                    console.error('Init error:', err);
                     setStatus('stopped');
                     isStarting = false;
                     overlay.classList.add('visible');
@@ -746,15 +726,14 @@
 
             // ─── Controls ───
             function startVM() {
-                if (isStarting) return;
+                if (!libraryLoaded || isStarting) return;
                 if (emulator) {
-                    // If already exists but stopped, try to run
                     try {
                         emulator.run();
                         showLoading('Booting…');
-                        setStatus('stopped'); // will update on event
+                        setStatus('stopped');
                         return;
-                    } catch (_) { /* fall through to recreate */ }
+                    } catch (_) {}
                 }
                 isStarting = true;
                 setStatus('stopped');
@@ -762,25 +741,19 @@
             }
 
             function togglePause() {
-                if (!emulator) return;
+                if (!emulator || !libraryLoaded) return;
                 try {
-                    if (vmState === 'running') {
-                        emulator.pause();
-                        // status updated by event listener
-                    } else if (vmState === 'paused') {
-                        emulator.resume();
-                        // status updated by event listener
-                    }
+                    if (vmState === 'running') emulator.pause();
+                    else if (vmState === 'paused') emulator.resume();
                 } catch (err) {
-                    console.warn('Pause/resume error:', err);
+                    console.warn('Pause error:', err);
                 }
             }
 
             function resetVM() {
-                if (!emulator) return;
+                if (!emulator || !libraryLoaded) return;
                 try {
                     emulator.stop();
-                    // Wait a beat then restart
                     setTimeout(() => {
                         try {
                             emulator.run();
@@ -799,15 +772,11 @@
             }
 
             function loadImage(file) {
-                if (!file) return;
-                // Validate file type (basic)
+                if (!file || !libraryLoaded) return;
                 const name = file.name.toLowerCase();
                 if (!name.endsWith('.img') && !name.endsWith('.iso') && !name.endsWith('.bin') && !name.endsWith('.raw')) {
-                    if (!confirm('The file "' + file.name + '" may not be a valid disk image. Load anyway?')) {
-                        return;
-                    }
+                    if (!confirm('The file "' + file.name + '" may not be a valid disk image. Load anyway?')) return;
                 }
-                // Stop current VM
                 if (emulator) {
                     try { emulator.stop(); } catch (_) {}
                     try { emulator.destroy(); } catch (_) {}
@@ -819,7 +788,6 @@
                 overlay.classList.add('visible');
                 spinner.style.display = 'none';
                 overlayText.innerHTML = 'Image loaded: <strong>' + file.name + '</strong> · click <strong>Start</strong> to boot';
-                // Update OS label
                 document.getElementById('osLabel').textContent = file.name.replace(/\.[^.]+$/, '') || 'Custom Image';
             }
 
@@ -832,7 +800,7 @@
                 }
             }
 
-            // ─── Event Listeners ───
+            // ─── Event listeners ───
             btnStart.addEventListener('click', startVM);
             btnPause.addEventListener('click', togglePause);
             btnReset.addEventListener('click', resetVM);
@@ -842,54 +810,59 @@
                 if (this.files && this.files[0]) {
                     loadImage(this.files[0]);
                 }
-                this.value = ''; // allow re-selecting same file
+                this.value = '';
             });
 
-            // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
-                // Ctrl+Alt+S = start
-                if (e.ctrlKey && e.altKey && e.key === 's') {
-                    e.preventDefault();
-                    startVM();
-                }
-                // Ctrl+Alt+P = pause/resume
-                if (e.ctrlKey && e.altKey && e.key === 'p') {
-                    e.preventDefault();
-                    togglePause();
-                }
-                // Ctrl+Alt+R = reset
-                if (e.ctrlKey && e.altKey && e.key === 'r') {
-                    e.preventDefault();
-                    resetVM();
-                }
-                // Ctrl+Alt+F = fullscreen
-                if (e.ctrlKey && e.altKey && e.key === 'f') {
-                    e.preventDefault();
-                    toggleFullscreen();
-                }
+                if (!libraryLoaded) return;
+                if (e.ctrlKey && e.altKey && e.key === 's') { e.preventDefault();
+                    startVM(); }
+                if (e.ctrlKey && e.altKey && e.key === 'p') { e.preventDefault();
+                    togglePause(); }
+                if (e.ctrlKey && e.altKey && e.key === 'r') { e.preventDefault();
+                    resetVM(); }
+                if (e.ctrlKey && e.altKey && e.key === 'f') { e.preventDefault();
+                    toggleFullscreen(); }
             });
 
-            // ─── Init ───
-            setStatus('stopped');
-            overlay.classList.add('visible');
-            spinner.style.display = 'none';
-            overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
-
-            // Click overlay to start (convenience)
             overlay.addEventListener('click', function(e) {
-                if (vmState === 'stopped' && !isStarting) {
-                    startVM();
-                } else if (vmState === 'paused') {
-                    togglePause();
+                if (vmState === 'stopped' && !isStarting && libraryLoaded) startVM();
+                else if (vmState === 'paused' && libraryLoaded) togglePause();
+            });
+
+            // ─── Boot: load library first ───
+            (async function init() {
+                // show initial loading
+                overlay.classList.add('visible');
+                spinner.style.display = 'block';
+                overlayText.innerHTML = '<strong>Loading v86 emulator…</strong>';
+                setLibraryStatus('⏳ loading');
+                const loaded = await loadLibrary();
+                if (loaded) {
+                    setLibraryStatus('✓ ready');
+                    setStatus('stopped');
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
+                    console.log('%c🖥️  Windows VM · v86 Emulator ready', 'font-size:18px;font-weight:600;color:#60a5fa;');
+                    console.log('  Start:   Ctrl+Alt+S');
+                    console.log('  Pause:   Ctrl+Alt+P');
+                    console.log('  Reset:   Ctrl+Alt+R');
+                    console.log('  Fullscreen: Ctrl+Alt+F');
+                } else {
+                    // all CDNs failed
+                    setLibraryStatus('✗ failed', true);
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML =
+                        '<strong>Library Error</strong> · Could not load v86 from any CDN.<br>' +
+                        'Please check your internet connection or try a different network.<br>' +
+                        '<span style="font-size:12px;opacity:0.5;">You can also load the library manually.</span>';
+                    console.error('All CDN attempts failed.');
                 }
-            });
+            })();
 
-            // Handle fullscreen change
-            document.addEventListener('fullscreenchange', function() {
-                // no-op, just visual
-            });
-
-            // ─── Expose for debugging ───
+            // Expose for debugging
             window.__vm = {
                 emulator: () => emulator,
                 state: () => vmState,
@@ -898,13 +871,6 @@
                 reset: resetVM,
                 loadImage: loadImage,
             };
-
-            console.log('%c🖥️  Windows VM · v86 Emulator', 'font-size:18px;font-weight:600;color:#60a5fa;');
-            console.log('  Start:   Ctrl+Alt+S');
-            console.log('  Pause:   Ctrl+Alt+P');
-            console.log('  Reset:   Ctrl+Alt+R');
-            console.log('  Fullscreen: Ctrl+Alt+F');
-            console.log('  Load image: click "Load Image" button');
 
         })();
     </script>
