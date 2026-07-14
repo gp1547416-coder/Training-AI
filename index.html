@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Windows VM · x86 Emulator</title>
-
+    <title>Windows 98 VM · v86</title>
     <style>
-        /* ── Reset & Base ── */
+        /* --- Your existing styles (unchanged) --- */
         *,
         *::before,
         *::after {
@@ -14,7 +13,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: radial-gradient(ellipse at 30% 20%, #1a1e2c, #0b0d14);
             min-height: 100vh;
@@ -25,7 +23,6 @@
             padding: 20px;
             margin: 0;
         }
-
         .vm-wrapper {
             width: 100%;
             max-width: 1000px;
@@ -37,12 +34,9 @@
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 0 40px rgba(0, 180, 255, 0.04);
             transition: all 0.3s ease;
         }
-
         .vm-wrapper:hover {
             box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 0 60px rgba(0, 180, 255, 0.06);
         }
-
-        /* ── Header ── */
         .vm-header {
             display: flex;
             align-items: center;
@@ -52,32 +46,27 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-
         .vm-header-left {
             display: flex;
             align-items: center;
             gap: 14px;
         }
-
         .vm-logo {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
         .vm-logo svg {
             width: 28px;
             height: 28px;
             filter: drop-shadow(0 0 6px rgba(0, 160, 255, 0.3));
         }
-
         .vm-logo span {
             font-weight: 600;
             font-size: 18px;
             color: #f0f4ff;
             letter-spacing: -0.3px;
         }
-
         .vm-logo small {
             font-weight: 400;
             font-size: 13px;
@@ -85,7 +74,6 @@
             letter-spacing: 0.3px;
             margin-left: 4px;
         }
-
         .vm-status-badge {
             display: flex;
             align-items: center;
@@ -97,7 +85,6 @@
             font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
         }
-
         .status-dot {
             width: 8px;
             height: 8px;
@@ -106,7 +93,6 @@
             transition: background 0.4s ease, box-shadow 0.4s ease;
             display: inline-block;
         }
-
         .status-dot.running {
             background: #4ade80;
             box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
@@ -119,8 +105,6 @@
             background: #f87171;
             box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
         }
-
-        /* ── Screen ── */
         .vm-screen-wrapper {
             position: relative;
             margin-top: 18px;
@@ -131,7 +115,6 @@
             aspect-ratio: 4 / 3;
             width: 100%;
         }
-
         .vm-screen-wrapper canvas {
             display: block;
             width: 100%;
@@ -139,7 +122,6 @@
             image-rendering: pixelated;
             background: #0a0c12;
         }
-
         .vm-overlay {
             position: absolute;
             inset: 0;
@@ -158,12 +140,10 @@
             transition: opacity 0.5s ease;
             z-index: 2;
         }
-
         .vm-overlay.visible {
             opacity: 1;
             pointer-events: auto;
         }
-
         .vm-overlay .spinner {
             width: 44px;
             height: 44px;
@@ -172,13 +152,11 @@
             border-radius: 50%;
             animation: spin 0.9s linear infinite;
         }
-
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
-
         .vm-overlay .overlay-text {
             font-weight: 400;
             letter-spacing: 0.5px;
@@ -186,13 +164,10 @@
             text-align: center;
             max-width: 80%;
         }
-
         .vm-overlay .overlay-text strong {
             color: rgba(255, 255, 255, 0.55);
             font-weight: 500;
         }
-
-        /* ── Controls ── */
         .vm-controls {
             display: flex;
             flex-wrap: wrap;
@@ -201,13 +176,11 @@
             margin-top: 18px;
             padding: 0 4px;
         }
-
         .vm-controls .btn-group {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
         }
-
         .vm-controls button {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.07);
@@ -225,7 +198,6 @@
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
         }
-
         .vm-controls button:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.09);
             border-color: rgba(255, 255, 255, 0.12);
@@ -233,51 +205,42 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
-
         .vm-controls button:active:not(:disabled) {
             transform: translateY(0px);
         }
-
         .vm-controls button:disabled {
             opacity: 0.3;
             cursor: not-allowed;
             transform: none !important;
         }
-
         .vm-controls button.success {
             background: rgba(74, 222, 128, 0.12);
             border-color: rgba(74, 222, 128, 0.18);
             color: rgba(134, 239, 172, 0.8);
         }
-
         .vm-controls button.success:hover:not(:disabled) {
             background: rgba(74, 222, 128, 0.22);
             border-color: rgba(74, 222, 128, 0.3);
             color: #fff;
         }
-
         .vm-controls button.danger {
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(239, 68, 68, 0.2);
             color: rgba(252, 165, 165, 0.8);
         }
-
         .vm-controls button.danger:hover:not(:disabled) {
             background: rgba(239, 68, 68, 0.25);
             border-color: rgba(239, 68, 68, 0.35);
             color: #fff;
         }
-
         .vm-controls .spacer {
             flex: 1;
             min-width: 12px;
         }
-
         .vm-controls .file-input-wrap {
             position: relative;
             display: inline-flex;
         }
-
         .vm-controls .file-input-wrap input[type="file"] {
             position: absolute;
             inset: 0;
@@ -286,12 +249,9 @@
             width: 100%;
             height: 100%;
         }
-
         .vm-controls .file-input-wrap button {
             pointer-events: none;
         }
-
-        /* ── Status Bar ── */
         .vm-statusbar {
             display: flex;
             justify-content: space-between;
@@ -304,30 +264,25 @@
             flex-wrap: wrap;
             gap: 6px;
         }
-
         .vm-statusbar .left,
         .vm-statusbar .right {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-
         .vm-statusbar .stat-item {
             display: flex;
             align-items: center;
             gap: 5px;
         }
-
         .vm-statusbar .stat-item .label {
             opacity: 0.4;
         }
-
         .vm-statusbar .stat-item .value {
             color: rgba(255, 255, 255, 0.55);
             font-weight: 500;
             font-variant-numeric: tabular-nums;
         }
-
         @media (max-width: 700px) {
             .vm-wrapper {
                 padding: 16px;
@@ -363,7 +318,6 @@
                 flex-wrap: wrap;
             }
         }
-
         @media (max-width: 480px) {
             .vm-wrapper {
                 padding: 12px;
@@ -380,7 +334,6 @@
                 font-size: 11px;
             }
         }
-
         ::-webkit-scrollbar {
             width: 0;
             background: transparent;
@@ -388,8 +341,7 @@
     </style>
 </head>
 <body>
-
-    <div class="vm-wrapper" id="app">
+    <div class="vm-wrapper">
         <!-- HEADER -->
         <header class="vm-header">
             <div class="vm-header-left">
@@ -410,7 +362,7 @@
         </header>
 
         <!-- SCREEN -->
-        <div class="vm-screen-wrapper" id="screenWrapper">
+        <div class="vm-screen-wrapper">
             <canvas id="v86Canvas" width="800" height="600"></canvas>
             <div class="vm-overlay visible" id="overlay">
                 <div class="spinner" id="spinner"></div>
@@ -493,6 +445,10 @@
         </div>
     </div>
 
+    <!-- ─── Use the CORRECT library from the official CDN ─── -->
+    <script src="https://cdn.jsdelivr.net/npm/v86@latest/build/libv86.js">
+    </script>
+
     <script>
         (function() {
             'use strict';
@@ -514,18 +470,11 @@
             const btnFullscreen = document.getElementById('btnFullscreen');
             const fileInput = document.getElementById('fileInput');
 
-            // ─── Constants ───
-            const CDN_BASE = 'https://copy.sh/v86/';
-            const BIOS_URL = CDN_BASE + 'bios/seabios.bin';
-            const VGABIOS_URL = CDN_BASE + 'bios/vgabios.bin';
-            const DEFAULT_IMAGE_URL = CDN_BASE + 'images/windows98.img';
-
-            // List of CDN URLs to try (in order)
-            const CDN_URLS = [
-                'https://cdn.jsdelivr.net/npm/v86@1.2.1/build/v86.js',
-                'https://unpkg.com/v86@1.2.1/build/v86.js',
-                'https://copy.sh/v86/v86.js' // fallback to original
-            ];
+            // ─── Constants (Official v86 sources) ───
+            const BIOS_URL = 'https://copy.sh/v86/bios/seabios.bin';
+            const VGABIOS_URL = 'https://copy.sh/v86/bios/vgabios.bin';
+            const WASM_URL = 'https://cdn.jsdelivr.net/npm/v86@latest/build/v86.wasm';
+            const DEFAULT_IMAGE_URL = 'https://copy.sh/v86/images/windows98.img';
 
             // ─── State ───
             let emulator = null;
@@ -553,12 +502,13 @@
                     stateLabel.textContent = '—';
                 }
 
-                btnStart.disabled = (state === 'running' || state === 'paused' || isStarting || !libraryLoaded);
-                btnPause.disabled = (state === 'stopped' || isStarting || !libraryLoaded);
-                btnReset.disabled = (state === 'stopped' || isStarting || !libraryLoaded);
-                btnLoadImage.disabled = !libraryLoaded;
-                fileInput.disabled = !libraryLoaded;
-                btnFullscreen.disabled = !libraryLoaded;
+                const enabled = libraryLoaded;
+                btnStart.disabled = (state === 'running' || state === 'paused' || isStarting || !enabled);
+                btnPause.disabled = (state === 'stopped' || isStarting || !enabled);
+                btnReset.disabled = (state === 'stopped' || isStarting || !enabled);
+                btnLoadImage.disabled = !enabled;
+                fileInput.disabled = !enabled;
+                btnFullscreen.disabled = !enabled;
 
                 if (state === 'paused') {
                     btnPause.textContent = 'Resume';
@@ -596,38 +546,37 @@
                 v86Status.style.color = isError ? '#f87171' : 'rgba(255,255,255,0.55)';
             }
 
-            // ─── Dynamic script loader ───
-            function loadScript(url) {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = url;
-                    script.async = true;
-                    script.onload = () => resolve(url);
-                    script.onerror = () => reject(url);
-                    document.head.appendChild(script);
-                });
-            }
-
-            async function loadLibrary() {
-                let success = false;
-                for (const url of CDN_URLS) {
-                    try {
-                        setLibraryStatus(`Trying ${url.split('/')[2]}…`);
-                        await loadScript(url);
-                        // Check if V86 is defined
-                        if (typeof V86 !== 'undefined') {
-                            libraryLoaded = true;
-                            setLibraryStatus('✓ loaded');
-                            return true;
-                        } else {
-                            // script loaded but V86 not defined (unlikely)
-                            console.warn('Script loaded but V86 not defined from', url);
-                        }
-                    } catch (err) {
-                        console.warn('Failed to load from', url, err);
-                    }
+            // ─── Check if the library loaded correctly ───
+            function checkLibrary() {
+                if (typeof V86Starter !== 'undefined') {
+                    libraryLoaded = true;
+                    setLibraryStatus('✓ loaded');
+                    setStatus('stopped');
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
+                    console.log('%c🖥️  Windows VM · v86 Emulator ready', 'font-size:18px;font-weight:600;color:#60a5fa;');
+                    console.log('  Start:   Ctrl+Alt+S');
+                    console.log('  Pause:   Ctrl+Alt+P');
+                    console.log('  Reset:   Ctrl+Alt+R');
+                    console.log('  Fullscreen: Ctrl+Alt+F');
+                    return true;
+                } else {
+                    setLibraryStatus('✗ not found', true);
+                    overlay.classList.add('visible');
+                    spinner.style.display = 'none';
+                    overlayText.innerHTML = `
+                            <strong>Library Error</strong><br>
+                            The v86 library (libv86.js) failed to load.<br><br>
+                            <strong>Try this:</strong><br>
+                            1. Download <a href="https://cdn.jsdelivr.net/npm/v86@latest/build/libv86.js" target="_blank" style="color:#93bbfc;">libv86.js</a><br>
+                            2. Save it in the <strong>same folder</strong> as this HTML file.<br>
+                            3. Replace the script src above with <strong>./libv86.js</strong><br>
+                            4. Refresh the page.
+                        `;
+                    console.error('V86Starter not defined. Library failed to load.');
+                    return false;
                 }
-                return false;
             }
 
             // ─── Emulator ───
@@ -641,13 +590,10 @@
                     screen_container: canvas,
                     bios: { url: BIOS_URL },
                     vga_bios: { url: VGABIOS_URL },
+                    wasm_path: WASM_URL,
                     autostart: false,
                     memory_size: 128 * 1024 * 1024,
                     vga_memory_size: 8 * 1024 * 1024,
-                    hda: null,
-                    fda: null,
-                    cdrom: null,
-                    network_relay_url: null,
                 };
 
                 if (imageFile instanceof File) {
@@ -678,7 +624,8 @@
 
             function initEmulator(config) {
                 try {
-                    emulator = new V86(config);
+                    // Use the CORRECT class name: V86Starter
+                    emulator = new V86Starter(config);
                     emulator.add_listener('emulator-loaded', function() {
                         hideOverlay();
                         setStatus('running');
@@ -830,39 +777,20 @@
                 else if (vmState === 'paused' && libraryLoaded) togglePause();
             });
 
-            // ─── Boot: load library first ───
-            (async function init() {
-                // show initial loading
-                overlay.classList.add('visible');
-                spinner.style.display = 'block';
-                overlayText.innerHTML = '<strong>Loading v86 emulator…</strong>';
-                setLibraryStatus('⏳ loading');
-                const loaded = await loadLibrary();
-                if (loaded) {
-                    setLibraryStatus('✓ ready');
-                    setStatus('stopped');
-                    overlay.classList.add('visible');
-                    spinner.style.display = 'none';
-                    overlayText.innerHTML = '<strong>Windows VM</strong> · click <strong>Start</strong> to boot';
-                    console.log('%c🖥️  Windows VM · v86 Emulator ready', 'font-size:18px;font-weight:600;color:#60a5fa;');
-                    console.log('  Start:   Ctrl+Alt+S');
-                    console.log('  Pause:   Ctrl+Alt+P');
-                    console.log('  Reset:   Ctrl+Alt+R');
-                    console.log('  Fullscreen: Ctrl+Alt+F');
+            // ─── Wait for the library to load, then check ───
+            function waitForLibrary() {
+                if (typeof V86Starter !== 'undefined') {
+                    checkLibrary();
                 } else {
-                    // all CDNs failed
-                    setLibraryStatus('✗ failed', true);
-                    overlay.classList.add('visible');
-                    spinner.style.display = 'none';
-                    overlayText.innerHTML =
-                        '<strong>Library Error</strong> · Could not load v86 from any CDN.<br>' +
-                        'Please check your internet connection or try a different network.<br>' +
-                        '<span style="font-size:12px;opacity:0.5;">You can also load the library manually.</span>';
-                    console.error('All CDN attempts failed.');
+                    // The script tag is loading; wait a bit and check again
+                    setTimeout(waitForLibrary, 200);
                 }
-            })();
+            }
 
-            // Expose for debugging
+            // Start the check after a short delay to let the script load
+            setTimeout(waitForLibrary, 300);
+
+            // Also expose for debugging
             window.__vm = {
                 emulator: () => emulator,
                 state: () => vmState,
@@ -874,6 +802,5 @@
 
         })();
     </script>
-
 </body>
 </html>
