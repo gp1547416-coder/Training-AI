@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Windows VM · x86 Emulator</title>
 
-    <!-- v86 Emulator Library -->
-    <script src="https://copy.sh/v86/v86.js">
+    <!-- v86 Emulator Library (reliable CDN) -->
+    <script src="https://unpkg.com/v86@1.2.1/build/v86.js">
     </script>
 
     <style>
@@ -547,6 +547,16 @@
         (function() {
             'use strict';
 
+            // ─── Check if V86 library loaded ───
+            if (typeof V86 === 'undefined') {
+                document.getElementById('overlayText').innerHTML =
+                    '<strong>Library Error</strong> · v86 emulator failed to load. <br> Please check your internet connection and refresh.';
+                document.getElementById('overlay').classList.add('visible');
+                document.getElementById('spinner').style.display = 'none';
+                console.error('V86 library not loaded. Check CDN.');
+                return;
+            }
+
             // ─── DOM refs ───
             const canvas = document.getElementById('v86Canvas');
             const overlay = document.getElementById('overlay');
@@ -714,8 +724,8 @@
                         overlay.classList.add('visible');
                         spinner.style.display = 'none';
                         overlayText.innerHTML =
-                        '<strong>Error</strong> · ' + (err.message || 'Failed to boot.') +
-                        ' <br><span style="font-size:12px;opacity:0.5;">Try loading a different disk image.</span>';
+                            '<strong>Error</strong> · ' + (err.message || 'Failed to boot.') +
+                            ' <br><span style="font-size:12px;opacity:0.5;">Try loading a different disk image.</span>';
                     });
 
                     // Show loading state
